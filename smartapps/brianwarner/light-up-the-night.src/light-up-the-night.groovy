@@ -66,38 +66,39 @@ def initialize() {
 }
 
 def doorOpenHandler(evt) {
-//	log.debug "Door opened."
+	log.debug "A door opened."
 	def now = new Date()
 	def sunTime = getSunriseAndSunset(sunriseOffset: "00:$sunriseoffset", sunsetOffset: "-00:$sunsetoffset")
 
 	if (now > sunTime.sunset || now < sunTime.sunrise) {
-//		log.debug "Turning lights on."
+		log.debug "Turning lights on."
 		lights.on()
     }
 }
 
 def doorClosedHandler(evt) {
-//	log.debug "A door closed."
+	log.debug "A door closed."
 	runIn(60 * timer, checkClosed)
 }
 
 def checkClosed() {
-//	log.debug "Checking to ensure all doors are still closed."
+	log.debug "Checking to ensure all doors are still closed."
     
 	def contactSensorState = contactsensors.currentState("contact")
 	def anyContactSensorsOpen = contactSensorState.value.findAll {it == "open"}
-    
-    if (!anyContactSensorsOpen) {
+
+	if (!anyContactSensorsOpen) {
+		log.debug "All doors are currently closed."
 		def elapsed = now() - contactSensorState.date.time.max()
 	    def timeout = 1000 * 60 * timer
     
 	    if (elapsed >= timeout) {
-//	    	log.debug "Doors have stayed closed. Turning off the lights."
+	    	log.debug "Doors have stayed closed. Turning off the lights."
 	        lights.off()
     	} else {
-//   		log.debug "Doors were opened. Wait a little longer."
+	   		log.debug "Doors were opened. Wait a little longer."
 	    }
 	} else {
-//    	log.debug "It appears a door is still open."
+    	log.debug "It appears a door is still open."
     }
 }
