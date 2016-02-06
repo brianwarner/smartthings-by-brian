@@ -91,14 +91,14 @@ def doorOpenHandler(evt) {
             if (anyPresenceSensorHere) {
                 def onPresence = anyPresenceSensorHere.displayName
                 log.debug "There's a presence sensor here, check if things are closed using the 'present' interval."
-                runIn(15 * timerPresent, checkClosed)
+                runIn(60 * timerPresent, checkClosed)
             } else {
                 log.debug "Presence sensor is away, check if things are closed using the 'not present' interval."
-                runIn(15 * timerAway, checkClosed)
+                runIn(60 * timerAway, checkClosed)
             }
         } else {
             log.debug "No presence sensors defined."
-            runIn(15 * timerAway, checkClosed)
+            runIn(60 * timerAway, checkClosed)
         }
     }
 }
@@ -136,10 +136,10 @@ def checkClosed() {
 
             if (anyPresenceSensorHere) {
                 log.debug "There's a presence sensor here, run using the present interval"
-                runIn(15*timerPresentReminder,checkClosed)
+                runIn(60*timerPresentReminder,checkClosed)
             } else {
                 log.debug "No presence sensor here, run using the not present interval"
-                runIn(15*timerAwayReminder,checkClosed)
+                runIn(60*timerAwayReminder,checkClosed)
             }
 
             log.debug "Going to check back."
