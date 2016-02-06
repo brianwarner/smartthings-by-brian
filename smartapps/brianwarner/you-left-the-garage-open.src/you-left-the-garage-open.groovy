@@ -54,6 +54,9 @@ preferences {
             input "push", "bool", title: "Send a push notification:", required: false
         }
     }
+    section() {
+		input "modes", "mode", title: "But don't warn me in these modes:", multiple: true
+    }
 }
 
 def installed() {
@@ -72,27 +75,31 @@ def updated() {
 def initialize() {
 	subscribe(contactsensors, "contact.open", doorOpenHandler)
     if (presence) {
-		// if there's a change in presence status, reset the timers.
+		log.debug "There's a presence sensor here, and its status just changed so reset the timer."
 		subscribe(presence, "presence", doorOpenHandler)
     }
 }
 
 def doorOpenHandler(evt) {
-
-	if (presence) {
-		def anyPresenceSensorHere = presence.findAll {it.currentValue("presence") == "present"}
-        
-		if (anyPresenceSensorHere) {
-        	def onPresence = anyPresenceSensorHere.displayName
-        	log.debug "There's a presence sensor here, check if things are closed using the present interval."
-        	runIn(60 * timerPresent, checkClosed)
-        } else {
-        	log.debug "Sensor isn't here, check if things are closed using the not present interval."
-            runIn(60 * timerAway, checkClosed)
-        }
+	if (modes.contains(location.mode)) {
+    	log.debug "Running in a disabled mode (${location.mode}), stop checking."
     } else {
-    	log.debug "No presence sensors defined."
-    	runIn(60 * timerAway, checkClosed)
+		if (presence) {
+            log.debug "A presence sensor is defined, so act accordingly if it is here or away."
+            def anyPresenceSensorHere = presence.findAll {it.currentValue("presence") == "present"}
+
+            if (anyPresenceSensorHere) {
+                def onPresence = anyPresenceSensorHere.displayName
+                log.debug "There's a presence sensor here, check if things are closed using the 'present' interval."
+                runIn(15 * timerPresent, checkClosed)
+            } else {
+                log.debug "Presence sensor is away, check if things are closed using the 'not present' interval."
+                runIn(15 * timerAway, checkClosed)
+            }
+        } else {
+            log.debug "No presence sensors defined."
+            runIn(15 * timerAway, checkClosed)
+        }
     }
 }
 
@@ -100,39 +107,44 @@ def checkClosed() {
 
 	def openContactSensors = contactsensors.findAll {it.currentValue("contact") == "open"}
 
-    log.debug "Checking if things are closed."
+	log.debug "Checking if things are closed."
 
 	if (openContactSensors) {
-		log.debug "Timer expired, warn that the door is still open."
+        def openNames = openContactSensors.displayName
 
-		def openNames = openContactSensors.displayName
-		def message = "These doors are still open, should they be? ${openNames.join(', ')}"
+		if (modes.contains(location.mode)) {
+			log.debug "Someone changed the mode to one that suppresses warnings.  Leave a message in the log, and exit."
+			sendNotificationEvent("You left these doors open, but asked not to be warned: ${openNames.join(', ')}")
+		} else {
+            log.debug "Timer expired, warn that the door is still open."
 
-		if (location.contactBookEnabled && recipients) {
-        	sendNotificationToContacts(message, recipients)
-    	} else {
-        	if ((phone) && (push)) {
-            	sendNotification(message, [method: "both", phone: phone])
-        	} else if (phone) {
-            	sendNotification(message, [method: "phone", phone: phone])
-            } else if (push) {
-            	sendNotification(message, [method: "push"])
+			def message = "These doors are still open, should they be? ${openNames.join(', ')}"
+
+			if (location.contactBookEnabled && recipients) {
+                sendNotificationToContacts(message, recipients)
+            } else {
+                if ((phone) && (push)) {
+                    sendNotification(message, [method: "both", phone: phone])
+                } else if (phone) {
+                    sendNotification(message, [method: "phone", phone: phone])
+                } else if (push) {
+                    sendNotification(message, [method: "push"])
+                }
             }
-    	}
-        
-        def anyPresenceSensorHere = presence.findAll {it.currentValue("presence") == "present"}
-        
-		if (anyPresenceSensorHere) {
-			log.debug "There's a presence sensor here, run using the present interval"
-			runIn(60*timerPresentReminder,checkClosed)
-        } else {
-	        log.debug "No presence sensor here, run using the not present interval"
-        	runIn(60*timerAwayReminder,checkClosed)
-        }
 
-		log.debug "Going to check back."
-        
+            def anyPresenceSensorHere = presence.findAll {it.currentValue("presence") == "present"}
+
+            if (anyPresenceSensorHere) {
+                log.debug "There's a presence sensor here, run using the present interval"
+                runIn(15*timerPresentReminder,checkClosed)
+            } else {
+                log.debug "No presence sensor here, run using the not present interval"
+                runIn(15*timerAwayReminder,checkClosed)
+            }
+
+            log.debug "Going to check back."
+		}
 	} else {
-    	log.debug "Someone closed the door in time."
+    	log.debug "Someone closed the door in time." 
     }
 }
