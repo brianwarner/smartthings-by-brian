@@ -28,8 +28,8 @@ preferences {
 	section("Preferences") {
 		input "theHumiditySensor", "capability.relativeHumidityMeasurement", title: "Which humidity sensor?", required: true
 		input "dehumidifierSwitch", "capability.switch", title: "Which switch controls the dehumidifier?", required: true
-        input "maxHumidity", "number", title: "Turn on at this humidity", required: true
-        input "minHumidity", "number", title: "Turn off at this humidity", required: true
+		input "maxHumidity", "number", title: "Turn on at this humidity", required: true
+		input "minHumidity", "number", title: "Turn off at this humidity", required: true
 
 		input "theMotionSensor", "capability.motionSensor", title: "Which motion sensor?", required: true
 		input "lockout", "number", title: "How long should the dehumidifier be paused when motion is detected?", required: true
