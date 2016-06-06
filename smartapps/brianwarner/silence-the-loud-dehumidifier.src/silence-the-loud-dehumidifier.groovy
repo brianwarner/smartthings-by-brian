@@ -61,26 +61,26 @@ def humidityHandler(evt) {
 
 	if (motionState.value == "inactive") {
 
-    	// Check to see if the sensor has been inactive long enough to consider turning on the dehumidifier
-    	def elapsed = now() - motionState.date.time
-        def threshold = 1000 * 60 * lockout
+		// Check to see if the sensor has been inactive long enough to consider turning on the dehumidifier
+		def elapsed = now() - motionState.date.time
+		def threshold = 1000 * 60 * lockout
 
-        if (elapsed >= threshold) {
+		if (elapsed >= threshold) {
 
-        	// It's been long enough.  Checking to see if we need to dehumidify.
+			// It's been long enough.  Checking to see if we need to dehumidify.
 			def currentHumidity = theHumiditySensor.latestValue("humidity")
 
 			if (currentHumidity > maxHumidity) {
 
 				// It's humid enough.  Turn on the switch.
 				dehumidifierSwitch.on()
-            } else if (currentHumidity < minHumidity) {
-            	
-                // It's dry enough.  Turn off the switch.
-                dehumidifierSwitch.off()
-            } 
-        }
-	} 
+			} else if (currentHumidity < minHumidity) {
+	
+				// It's dry enough.  Turn off the switch.
+				dehumidifierSwitch.off()
+			} 
+		}
+	}
 }
 
 def motionHandler(evt) {
