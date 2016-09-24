@@ -41,6 +41,10 @@ preferences {
     	input "vehicletimer", "number", required: true, title: "And has been there for at least this many minutes:"
     }
 
+	section() {
+    	input "lights", "capability.switch", required: false, title: "Optionally, blink this light before opening:"
+    }
+
 }
 
 def installed() {
@@ -73,6 +77,20 @@ def presenceHandler(evt) {
     } else if ((vehicleState.value == "present") && (elapsed < threshold)) {
     	log.debug "${presence.label} just arrived and ${vehicle.label} arrived at the same time, so I'm opening ${garage.label}"
         sendNotificationEvent("${presence.label} just arrived and ${vehicle.label} arrived at the same time, so I'm opening ${garage.label}")
+
+		if (lights) {
+			def lightState = lights.currentSwitch()
+
+			if (lightState == "on") {
+        		lights.off()
+        	    pause(2000)
+    	        lights.on()
+	        } else {
+        		lights.on()
+        	    pause(2000)
+    	        lights.off()
+	        }
+		}
 		garage.open()
     } else {
     	log.debug "${presence.label} just arrived but ${vehicle.label} was already here, so I'm keeping ${garage.label} shut."
