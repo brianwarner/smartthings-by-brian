@@ -84,7 +84,7 @@ def checkHumidity(evt) {
 }
 
 def doorHandler(evt) {
-	if(evt.value == "open") {
+	if (evt.value == "open") {
         log.debug "A door opened, turning off."
 		dehumidifierSwitch.off()
     } else {
