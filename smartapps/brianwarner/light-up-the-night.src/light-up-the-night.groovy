@@ -72,6 +72,7 @@ def doorOpenHandler(evt) {
 
 	if (now > sunTime.sunset || now < sunTime.sunrise) {
 		log.debug "Turning lights on."
+        sendNotificationEvent("Turning on lights")
 		lights.on()
     }
 }
@@ -95,10 +96,13 @@ def checkClosed() {
 	    if (elapsed >= timeout) {
 	    	log.debug "Doors have stayed closed. Turning off the lights."
 	        lights.off()
+            sendNotificationEvent("Doors stayed closed, turning off the outside lights")
     	} else {
 	   		log.debug "Doors were opened. Wait a little longer."
+            sendNotificationEvent("Doors were opened, waiting")
 	    }
 	} else {
     	log.debug "It appears a door is still open."
+        sendNotificationEvent("A door is still open")
     }
 }
