@@ -34,9 +34,6 @@ preferences {
     section () {
     	input "runFreq","enum", options: ["1 hour", "3 hours"], title: "Every:"
     }
-    section () {
-    	mode(name: "activeModes", title: "When in these modes:")
-    }
 }
 
 def installed() {
