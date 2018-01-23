@@ -1,7 +1,7 @@
 /**
  *  Light Up The Night
  *
- *  Copyright 2015 Brian Warner
+ *  Copyright 2018 Brian Warner
  *
  *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  *  in compliance with the License. You may obtain a copy of the License at:
@@ -27,9 +27,13 @@ definition(
 preferences {
 
 section() {
-    	input "contactsensors", "capability.contactSensor", multiple: true, title: "When these doors open:"
+    	input "contactsensors", "capability.contactSensor", required: false, multiple: true, title: "When these doors open:"
 	}
-    
+
+	section() {
+    	input "locks", "capability.lock", required: false, multiple: true, title: "Or these locks:"
+	}
+
     section() {
 		input "lights", "capability.switch", required: true, multiple: true, title: "Turn on these lights:"
     }
@@ -62,47 +66,31 @@ def updated() {
 
 def initialize() {
 	subscribe(contactsensors, "contact.open", doorOpenHandler)
-    subscribe(contactsensors, "contact.closed", doorClosedHandler)
+	subscribe(locks, "lock.unlocked", doorOpenHandler)
+	subscribe(contactsensors, "contact.closed", doorClosedHandler)
+	subscribe(locks, "lock.locked", doorClosedHandler)
 }
 
 def doorOpenHandler(evt) {
-	log.debug "A door opened."
+
 	def now = new Date()
 	def sunTime = getSunriseAndSunset(sunriseOffset: "00:$sunriseoffset", sunsetOffset: "-00:$sunsetoffset")
 
 	if (now > sunTime.sunset || now < sunTime.sunrise) {
-		log.debug "Turning lights on."
-        sendNotificationEvent("Turning on lights")
 		lights.on()
     }
 }
 
 def doorClosedHandler(evt) {
-	log.debug "A door closed."
-	runIn(60 * timer, checkClosed)
+	runIn(5 * (timer), checkClosed)
 }
 
 def checkClosed() {
-	log.debug "Checking to ensure all doors are still closed."
-    
-	def contactSensorState = contactsensors.currentState("contact")
-	def anyContactSensorsOpen = contactSensorState.value.findAll {it == "open"}
 
-	if (!anyContactSensorsOpen) {
-		log.debug "All doors are currently closed."
-		def elapsed = now() - contactSensorState.date.time.max()
-	    def timeout = 1000 * 60 * timer
+	def anyContactSensorsOpen = contactsensors.findAll { it?.latestValue("contact") == 'open' }
+	def anyLocksOpen = locks.findAll { it?.latestValue("lock") == 'unlocked' }
     
-	    if (elapsed >= timeout) {
-	    	log.debug "Doors have stayed closed. Turning off the lights."
-	        lights.off()
-            sendNotificationEvent("Doors stayed closed, turning off the outside lights")
-    	} else {
-	   		log.debug "Doors were opened. Wait a little longer."
-            sendNotificationEvent("Doors were opened, waiting")
-	    }
-	} else {
-    	log.debug "It appears a door is still open."
-        sendNotificationEvent("A door is still open")
-    }
+	if (!anyContactSensorsOpen && !anyLocksOpen) {
+        lights.off()
+	}
 }

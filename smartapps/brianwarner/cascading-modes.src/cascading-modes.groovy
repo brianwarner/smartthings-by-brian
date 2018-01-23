@@ -26,7 +26,6 @@ definition(
 
 preferences {
 	section() {
-    	input "triggerMode", "mode", title: "When the mode is", required: true
     	input "changeTime", "time", title: "At", required: true
     	input "targetMode", "mode", title: "Set the mode to", required: true
 	}
@@ -48,12 +47,11 @@ def updated() {
 
 def initialize() {
 	schedule(changeTime,changeHandler)
-
 }
 
 def changeHandler(evt) {
 
-	if (location.mode == triggerMode) {
+	if (location.modes?.find{it.name == targetMode}) {
     	setLocationMode(targetMode)
         sendNotificationEvent("Changing the mode to ${targetMode}.")
     }
