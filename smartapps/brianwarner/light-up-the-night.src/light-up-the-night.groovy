@@ -82,7 +82,7 @@ def doorOpenHandler(evt) {
 }
 
 def doorClosedHandler(evt) {
-	runIn(5 * (timer), checkClosed)
+	runIn(60 * (timer), checkClosed)
 }
 
 def checkClosed() {
