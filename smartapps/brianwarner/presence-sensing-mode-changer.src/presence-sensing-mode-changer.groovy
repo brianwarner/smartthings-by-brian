@@ -17,7 +17,7 @@ definition(
     name: "Presence Sensing Mode Changer",
     namespace: "brianwarner",
     author: "Brian Warner",
-    description: "Set more complicated rules for mode changes, such as when some people are here, and others aren&#39;t.  In addition, do this on a schedule.",
+    description: "Set more complicated rules for mode changes, such as when some people are here, and others are not.  In addition, do this on a schedule.",
     category: "Mode Magic",
     iconUrl: "http://cdn.device-icons.smartthings.com/Home/home4-icn.png",
     iconX2Url: "http://cdn.device-icons.smartthings.com/Home/home4-icn@2x.png",
@@ -31,10 +31,10 @@ preferences {
     	input "primaryStatus", "enum", title: "Are", options: ["Here","Away"], required: true
     }
     
-    section ("Secondary group (optional)") {
-    	input "secondaryLogic", "enum", title: "And when", options: ["Any","All"], hideWhenEmpty: "secondGroupControl"
-    	input "secondaryMembers", "capability.presenceSensor", title: "Of these people", multiple: true, hideWhenEmpty: "secondGroupControl"
-    	input "secondaryStatus", "enum", title: "Are", options: ["Here","Away"], hideWhenEmpty: "secondGroupControl"
+    section (hideable: true, "Secondary group (optional)") {
+    	input "secondaryLogic", "enum", title: "And when", options: ["Disabled","Any","All"], defaultValue: "Disabled", required: false
+    	input "secondaryMembers", "capability.presenceSensor", title: "Of these people", multiple: true, required: false
+    	input "secondaryStatus", "enum", title: "Are", options: ["Here","Away"], required: false
     }
     
     section("Mode") {
@@ -123,7 +123,7 @@ def checkPrimaryPeople() {
 
 def checkSecondaryPeople() {
 	// Next, find out if the secondary people condition is met.
-	if (secondaryMembers.size() > 0) {
+	if ((secondaryLogic != 'Disabled') && (secondaryMembers.size() > 0)) {
 
 		def secondaryPresenceSensorState = secondaryMembers.currentState("presence")
 		def secondarySensorsHere = secondaryPresenceSensorState.value.findAll {it == "present"}
@@ -135,7 +135,9 @@ def checkSecondaryPeople() {
 			} else if ((secondaryLogic == "Any") && (secondarySensorsHere.size() > 0)) {
     	    	log.debug "Secondary: Somebody is here"
 	            changeMode()
-        	}
+        	} else {
+            	log.debug "oops"
+            }
     	} else {
 	    	if (secondarySensorsHere.size() == 0) {
         		log.debug "Secondary: Nobody is here"
